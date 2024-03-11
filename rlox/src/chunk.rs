@@ -3,7 +3,12 @@ use crate::{location, value};
 #[repr(u8)]
 pub enum OpCode {
     Constant = 1,
-    Return = 2,
+    Add = 2,
+    Subtract = 3,
+    Multiply = 4,
+    Divide = 5,
+    Negate = 6,
+    Return = 7,
 }
 
 #[derive(Default)]

@@ -1,21 +1,25 @@
-.PHONY: build
+.PHONY: build 
 
-build:
-	cargo build
+OUT_DIR ?= '../rlox-vsce/out/wasm'
 
-trace:
-	cargo clippy --tests --features debug_trace_execution
-	cargo run --features debug_trace_execution
+build: 
+	wasm-pack build --dev --target nodejs --out-dir $(OUT_DIR)
+	rm -f $(OUT_DIR)/.gitignore $(OUT_DIR)/package.json
 
 clean:
-	rm -f lox*profraw
 	cargo clean
+	$(MAKE) -C ../rlox clean
 
 clippy:
-	cargo clippy --tests
+	cargo clippy
+	$(MAKE) -C ../rlox clippy
 
 test:
-	cargo test -- --nocapture
+	cargo test
+	$(MAKE) -C ../rlox test
+
+init:
+	cargo update
 
 coverage:
 	rm -f lox*profraw

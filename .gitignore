@@ -17,3 +17,4 @@ Cargo.lock
 *.profraw
 
 *.swp
+rlox-vsce/out/

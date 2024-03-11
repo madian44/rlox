@@ -28,7 +28,11 @@ pub fn disassemble_chunk(output: &dyn DebugOutput, chunk: &chunk::Chunk, name: &
     }
 }
 
-fn disassemble_instruction(output: &dyn DebugOutput, chunk: &chunk::Chunk, index: usize) -> usize {
+pub fn disassemble_instruction(
+    output: &dyn DebugOutput,
+    chunk: &chunk::Chunk,
+    index: usize,
+) -> usize {
     let header = format!("{index:04}");
     let line = if index > 0 && chunk.locations[index].has_same_line(&chunk.locations[index - 1]) {
         "   |".to_string()
@@ -39,6 +43,11 @@ fn disassemble_instruction(output: &dyn DebugOutput, chunk: &chunk::Chunk, index
     let (increment, content) = match op_code {
         Some(chunk::OpCode::Return) => simple_instruction("OP_RETURN"),
         Some(chunk::OpCode::Constant) => constant_instruction("OP_CONSTANT", chunk, index),
+        Some(chunk::OpCode::Negate) => simple_instruction("OP_NEGATE"),
+        Some(chunk::OpCode::Add) => simple_instruction("OP_ADD"),
+        Some(chunk::OpCode::Subtract) => simple_instruction("OP_SUBTRACT"),
+        Some(chunk::OpCode::Multiply) => simple_instruction("OP_MULTIPLY"),
+        Some(chunk::OpCode::Divide) => simple_instruction("OP_DIVIDE"),
         None => (1, format!("Unknown op_code {}", chunk.code[index])),
     };
     output.write(&format!("{header} {line} {content}"));
@@ -46,11 +55,13 @@ fn disassemble_instruction(output: &dyn DebugOutput, chunk: &chunk::Chunk, index
 }
 
 fn byte_to_op_code(byte: u8) -> Option<chunk::OpCode> {
-    match byte {
-        x if x == chunk::OpCode::Constant as u8 => Some(chunk::OpCode::Constant),
-        x if x == chunk::OpCode::Return as u8 => Some(chunk::OpCode::Return),
-        _ => None,
-    }
+    // match byte {
+    //     x if x == chunk::OpCode::Constant as u8 => Some(chunk::OpCode::Constant),
+    //     x if x == chunk::OpCode::Return as u8 => Some(chunk::OpCode::Return),
+    //     _ => None,
+    // }
+    let op_code: chunk::OpCode = unsafe { std::mem::transmute(byte) };
+    Some(op_code)
 }
 
 fn simple_instruction(name: &str) -> (usize, String) {

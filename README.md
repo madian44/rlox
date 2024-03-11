@@ -8,7 +8,9 @@ This is the second part of the book, `A Bytecode Virtual Machine`. For an implem
 
 ## Pre-requisites
 
-- rust toolchain (https://www.rust-lang.org/tools/install)
+- rust toolchain (https://rustwasm.github.io/docs/book/game-of-life/setup.html) (rust and wasm-pack at least)
+- node (https://github.com/nvm-sh/nvm)
+- vcse (https://code.visualstudio.com/api/working-with-extensions/publishing-extension#vsce)
 - make
 
 ## Building
@@ -29,9 +31,14 @@ For coverage `grcov` and `llvm-tools-preview` are required:
 
 `rust` implementation of clox.
 
+### rlox-wasm
+
+`wasm` build of `rlox`.
+
 ## Progress through the book...
 
 ### Implemented
 
  * Chapter 14 Chunks of Bytecode
+ * Chapter 15 A Virtual Machine
 
