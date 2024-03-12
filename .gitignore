@@ -18,3 +18,5 @@ Cargo.lock
 
 *.swp
 rlox-vsce/out/
+.idea
+.vscode

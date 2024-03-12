@@ -4,18 +4,18 @@ build:
 	cargo build
 
 trace:
-	cargo clippy --tests --features debug_trace_execution
-	cargo run --features debug_trace_execution
+	cargo clippy --tests --features debug_trace_execution,debug_chunk
+	cargo run --features debug_trace_execution,debug_chunk
 
 clean:
 	rm -f lox*profraw
 	cargo clean
 
 clippy:
-	cargo clippy --tests
+	cargo clippy --tests --features debug_chunk
 
 test:
-	cargo test -- --nocapture
+	cargo test --features debug_chunk -- --nocapture
 
 coverage:
 	rm -f lox*profraw
