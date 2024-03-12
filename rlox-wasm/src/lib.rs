@@ -1,8 +1,7 @@
-use rlox::DebugOutput;
+use wasm_bindgen::prelude::wasm_bindgen;
 
-fn main() {
-    println!("Hello, world!");
-
+#[wasm_bindgen]
+pub fn example() {
     let mut chunk = rlox::Chunk::new();
     let output = rlox::DefaultDebugOutput::new();
 
@@ -28,7 +27,4 @@ fn main() {
     let mut vm = rlox::Vm::new(chunk);
     println!("Interpreting...");
     vm.interpret();
-    output.write(&vm.get_stack_string());
-
-    //chunk.free();
 }

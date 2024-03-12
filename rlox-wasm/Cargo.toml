@@ -1,0 +1,22 @@
+[package]
+name = "rlox-wasm"
+version = "0.2.0"
+authors = ["madian44 <madian44@users.noreply.github.com>"]
+edition = "2021"
+license-file = "LICENSE"
+repository = "https://github.com/madian44/rlox"
+description = ""
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = { version = "0.2.92", features = ["serde-serialize"] }
+js-sys = "0.3.69"
+rlox = { path = "../rlox" }
+serde = { version = "1.0.197", features = ["derive"] }
+serde-wasm-bindgen = "0.6.5"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.42"
+regex = "1.10.3"

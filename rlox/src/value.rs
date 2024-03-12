@@ -1,6 +1,7 @@
 use std::fmt::Display;
 use std::fmt::Formatter;
 
+#[derive(Clone)]
 pub enum Value {
     Number(f64),
 }
