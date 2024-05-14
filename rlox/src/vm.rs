@@ -1,6 +1,14 @@
+mod compiler;
+mod result;
+mod scanner;
+mod token;
+
 #[cfg(feature = "debug_trace_execution")]
-use crate::debug::{disassemble_instruction, DebugOutput, DefaultDebugOutput};
-use crate::{chunk, value};
+use crate::debug::disassemble_instruction;
+use crate::{chunk, reporter::Reporter, value};
+
+use crate::vm::compiler::compile;
+pub use crate::vm::result::InterpretResult;
 
 const STACK_MAX: usize = 256;
 
@@ -17,28 +25,36 @@ macro_rules! bin_op {
     }
 }
 
-pub enum InterpretResult {
-    Ok,
-    CompileError,
-    RuntimeError,
-}
-
-pub struct Vm {
-    chunk: chunk::Chunk,
+pub struct Vm<'a> {
+    reporter: &'a dyn Reporter,
     ip: *const u8,
     stack: Vec<value::Value>,
+
+    #[cfg(feature = "debug_chunk")]
+    chunk: chunk::Chunk,
 }
 
-impl Vm {
-    pub fn new(chunk: chunk::Chunk) -> Self {
+impl<'a> Vm<'a> {
+    pub fn new(reporter: &'a dyn Reporter) -> Self {
         Self {
-            chunk,
+            reporter,
             ip: std::ptr::null_mut(),
             stack: Vec::with_capacity(STACK_MAX),
+            #[cfg(feature = "debug_chunk")]
+            chunk: chunk::Chunk::new()
         }
     }
+    
+    pub fn interpret(&mut self, source: &str) -> InterpretResult {
+        compile(self.reporter, source);
+        //self.ip = self.chunk.code.as_ptr();
+        //self.run()
+        InterpretResult::Ok
+    }
 
-    pub fn interpret(&mut self) -> InterpretResult {
+    #[cfg(feature = "debug_chunk")]
+    pub fn test_interpret_chunk(&mut self, chunk: chunk::Chunk) -> InterpretResult {
+        self.chunk = chunk;
         self.ip = self.chunk.code.as_ptr();
         self.run()
     }
@@ -92,8 +108,13 @@ impl Vm {
 
     #[inline(always)]
     fn read_constant(&mut self) -> Option<value::Value> {
-        let index = self.read_byte() as usize;
-        self.chunk.constants.get(index).cloned()
+        #[cfg(feature = "debug_chunk")]
+        {
+            let index = self.read_byte() as usize;
+            return self.chunk.constants.get(index).cloned();
+        } 
+        #[cfg(not(feature = "debug_chunk"))]
+        None
     }
 
     #[inline(always)]
@@ -102,10 +123,12 @@ impl Vm {
             // DANGER!
             #[cfg(feature = "debug_trace_execution")]
             {
-                let output = DefaultDebugOutput::new();
-                output.write(&format!("          {}", self.get_stack_string()));
-                let index = self.ip.offset_from(self.chunk.code.as_ptr());
-                disassemble_instruction(&output, &self.chunk, index as usize);
+                #[cfg(feature = "debug_chunk")]
+                if self.chunk.has_code() {
+                    self.reporter.add_message(&format!("          {}", self.get_stack_string()));
+                    let index = self.ip.offset_from(self.chunk.code.as_ptr());
+                    disassemble_instruction(self.reporter, &self.chunk, index as usize);
+                }
             }
             std::mem::transmute(self.read_byte())
         };

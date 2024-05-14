@@ -1,34 +1,54 @@
-use rlox::DebugOutput;
+use std::{env, fs, io, io::Write, process};
+use rlox::InterpretResult;
 
 fn main() {
-    println!("Hello, world!");
+    println!("Hello, Rlox!");
 
-    let mut chunk = rlox::Chunk::new();
-    let output = rlox::DefaultDebugOutput::new();
+    let args: Vec<String> = env::args().collect();
+    match args.len() {
+        1 => run_prompt(),
+        2 => run_file(&args[1]),
+        _ => {
+            eprintln!("Usage: {} [script]", args[0]);
+            process::exit(64);
+        }
+    }
+}
 
-    let constant = chunk.add_constant(rlox::Value::Number(1.2));
-    chunk.write_op_code(rlox::OpCode::Constant, rlox::Location::new(123, 0, 0));
-    chunk.write_byte(constant as u8, rlox::Location::new(123, 0, 0));
+fn run_prompt() {
+    let reporter = rlox::DefaultReporter::default();
+    let mut vm = rlox::Vm::new(&reporter);
+    loop {
+        print!("(lox)> ");
+        if io::stdout().flush().is_err() {
+            return;
+        }
+        let mut line = String::new();
+        match io::stdin().read_line(&mut line) {
+            Err(_) => break,
+            Ok(_) => {
+                let trimmed_line = line.trim();
+                if trimmed_line.is_empty() {
+                    break;
+                }
+                vm.interpret(trimmed_line);
+            }
+        }
+    }
+    println!("done");
+}
 
-    let constant = chunk.add_constant(rlox::Value::Number(3.4));
-    chunk.write_op_code(rlox::OpCode::Constant, rlox::Location::new(124, 0, 0));
-    chunk.write_byte(constant as u8, rlox::Location::new(124, 0, 0));
-
-    chunk.write_op_code(rlox::OpCode::Add, rlox::Location::new(124, 0, 0));
-
-    let constant = chunk.add_constant(rlox::Value::Number(5.6));
-    chunk.write_op_code(rlox::OpCode::Constant, rlox::Location::new(124, 0, 0));
-    chunk.write_byte(constant as u8, rlox::Location::new(124, 0, 0));
-
-    chunk.write_op_code(rlox::OpCode::Divide, rlox::Location::new(124, 0, 0));
-    chunk.write_op_code(rlox::OpCode::Negate, rlox::Location::new(124, 0, 0));
-    chunk.write_op_code(rlox::OpCode::Return, rlox::Location::new(125, 0, 0));
-    rlox::disassemble_chunk(&output, &chunk, "test chunk #1");
-
-    let mut vm = rlox::Vm::new(chunk);
-    println!("Interpreting...");
-    vm.interpret();
-    output.write(&vm.get_stack_string());
-
-    //chunk.free();
+fn run_file(filepath: &str) {
+    let contents = fs::read_to_string(filepath);
+    if let Err(e) = contents {
+        eprintln!("{e}");
+        process::exit(74);
+    }
+    let reporter = rlox::DefaultReporter::default();
+    let mut vm = rlox::Vm::new(&reporter);
+    match vm.interpret(&contents.unwrap()) {
+        InterpretResult::Ok => process::exit(0),
+        InterpretResult::CompileError => process::exit(65),
+        InterpretResult::RuntimeError => process::exit(70),
+    }
 }

@@ -1,26 +1,7 @@
-use crate::chunk;
+use crate::{chunk, reporter::Reporter};
 
-pub trait DebugOutput {
-    fn write(&self, message: &str);
-}
-
-#[derive(Default)]
-pub struct DefaultDebugOutput {}
-
-impl DefaultDebugOutput {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl DebugOutput for DefaultDebugOutput {
-    fn write(&self, message: &str) {
-        println!("{}", message);
-    }
-}
-
-pub fn disassemble_chunk(output: &dyn DebugOutput, chunk: &chunk::Chunk, name: &str) {
-    output.write(&format!("=== {name} ==="));
+pub fn disassemble_chunk(output: &dyn Reporter, chunk: &chunk::Chunk, name: &str) {
+    output.add_message(&format!("=== {name} ==="));
 
     let mut index = 0;
     while index < chunk.code.len() {
@@ -28,16 +9,12 @@ pub fn disassemble_chunk(output: &dyn DebugOutput, chunk: &chunk::Chunk, name: &
     }
 }
 
-pub fn disassemble_instruction(
-    output: &dyn DebugOutput,
-    chunk: &chunk::Chunk,
-    index: usize,
-) -> usize {
+pub fn disassemble_instruction(output: &dyn Reporter, chunk: &chunk::Chunk, index: usize) -> usize {
     let header = format!("{index:04}");
     let line = if index > 0 && chunk.locations[index].has_same_line(&chunk.locations[index - 1]) {
         "   |".to_string()
     } else {
-        format!("{:4}", chunk.locations[index].line)
+        format!("{:4}", chunk.locations[index].start.line)
     };
     let op_code = byte_to_op_code(chunk.code[index]);
     let (increment, content) = match op_code {
@@ -50,7 +27,7 @@ pub fn disassemble_instruction(
         Some(chunk::OpCode::Divide) => simple_instruction("OP_DIVIDE"),
         None => (1, format!("Unknown op_code {}", chunk.code[index])),
     };
-    output.write(&format!("{header} {line} {content}"));
+    output.add_message(&format!("{header} {line} {content}"));
     index + increment
 }
 
